@@ -1,0 +1,86 @@
+{
+  "name": "alfasix/alfakit-calendar",
+  "description": "FullCalendar widgets for AlfaKit panels: month, week, day and list views, event actions, drag and drop.",
+  "keywords": [
+    "laravel",
+    "alfakit",
+    "calendar",
+    "fullcalendar",
+    "events",
+    "scheduling"
+  ],
+  "homepage": "https://alfakit.dev/docs/plugins/calendar",
+  "license": "MIT",
+  "type": "library",
+  "authors": [
+    {
+      "name": "Alfa Six",
+      "homepage": "https://alfasixbh.com",
+      "role": "Developer"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/alfasixbh/alfakit/issues",
+    "source": "https://github.com/alfasixbh/alfakit/tree/main/packages/plugins/calendar"
+  },
+  "require": {
+    "php": "^8.3",
+    "alfasix/alfakit": "^0.1|@dev"
+  },
+  "autoload": {
+    "psr-4": {
+      "AlfaSix\\AlfakitCalendar\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "AlfaSix\\AlfakitCalendar\\Tests\\": "tests/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "AlfaSix\\AlfakitCalendar\\AlfakitCalendarServiceProvider"
+      ]
+    },
+    "alfakit": {
+      "version": "^0.1",
+      "frontend": null,
+      "showcase": {
+        "demoPath": "calendar",
+        "tour": [
+          "Open the promotions calendar",
+          "Switch between month, week and list views",
+          "Drag an event to a new day",
+          "Click an event to edit it"
+        ],
+        "clips": [
+          "react-light",
+          "react-dark",
+          "vue-light",
+          "vue-dark",
+          "svelte-light",
+          "svelte-dark"
+        ],
+        "worksWith": [
+          "kanban",
+          "workflows",
+          "comments"
+        ],
+        "highlights": [
+          "FullCalendar month, week, day and list views",
+          "Events from Eloquent queries",
+          "Create, edit and delete actions",
+          "Drag and drop with server checks",
+          "Dashboard widgets",
+          "Themed with your panel"
+        ]
+      }
+    }
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}
