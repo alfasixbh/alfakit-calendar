@@ -713,6 +713,12 @@ abstract class CalendarWidget extends Widget implements HasResource
             ->all();
 
         $clickAction = ($name = $this->getEventClickActionName()) !== null ? ($actions[$name] ?? null) : null;
+
+        // It opens for the clicked event: an edit or delete action is offered before its
+        // record is known and checks it then.
+        if ($clickAction instanceof Action && method_exists($clickAction, 'offeredBeforeRecord')) {
+            $clickAction->offeredBeforeRecord();
+        }
         $selectAction = ($name = $this->getDateSelectActionName()) !== null ? ($actions[$name] ?? null) : null;
 
         return [

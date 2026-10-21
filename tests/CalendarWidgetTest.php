@@ -99,6 +99,36 @@ it('offers the event click action before an event is clicked by the viewAny abil
     expect($widget['eventClickAction'] ?? null)->toBeNull();
 });
 
+it('offers editAction() as the event click action and checks update when an event is opened', function (): void {
+    Panels::register('cal', fn (Panel $panel): Panel => $panel
+        ->plugin(CalendarPlugin::make()->editable())
+        ->pages([Dashboard::class])
+        ->widgets([AlfaSix\AlfakitCalendar\Tests\Fixtures\EditingMeetingsCalendar::class]));
+    calendarTest()->actingAs(calendarUser());
+    $open = Meeting::query()->create(['title' => 'Planning', 'starts_at' => '2026-10-13 06:00:00']);
+    $locked = Meeting::query()->create(['title' => 'Locked', 'starts_at' => '2026-10-14 06:00:00']);
+
+    // `update(User, Meeting)` needs a meeting: before one is clicked the action is offered.
+    [$token, $widget] = calendarWidget(calendarTest());
+    expect($widget['eventClickAction']['name'] ?? null)->toBe('edit');
+
+    $modal = fn (Meeting $meeting) => calendarTest()->getJson('/cal/_alfakit/actions/modal?'.http_build_query([
+        'token' => $token, 'component' => "widget:{$widget['id']}", 'action' => 'edit', 'record' => $meeting->id,
+    ]));
+
+    expect($modal($open)->assertOk()->json('form.state.title'))->toBe('Planning');
+    $modal($locked)->assertForbidden();
+
+    // Offered without a record, it never runs without one.
+    calendarTest()->widgetAction('cal', $token, $widget['id'], 'edit', ['data' => ['title' => 'X', 'starts_at' => '2026-10-15 06:00:00']])->assertForbidden();
+    expect(Meeting::query()->where('title', 'X')->exists())->toBeFalse();
+
+    MeetingPolicy::$viewAny = false;
+
+    [, $widget] = calendarWidget(calendarTest());
+    expect($widget['eventClickAction'] ?? null)->toBeNull();
+});
+
 it('sends a skeleton stand-in for lazy calendars', function (): void {
     $widget = new class extends CalendarWidget
     {
@@ -315,4 +345,13 @@ it('serialises events with wall-time dates', function (): void {
         'allDay' => false,
         'backgroundColor' => '#f97316',
     ])->and(Event::make()->title('Holiday')->start(CarbonImmutable::parse('2026-10-13', 'UTC'))->allDay()->toCalendarArray('Asia/Tokyo')['start'])->toBe('2026-10-13');
+});
+
+it('publishes its translations with the alfakit-calendar-translations tag', function (): void {
+    $paths = Illuminate\Support\ServiceProvider::pathsToPublish(AlfaSix\AlfakitCalendar\AlfakitCalendarServiceProvider::class, 'alfakit-calendar-translations');
+
+    expect($paths)->toHaveCount(1)
+        ->and(array_key_first($paths))->toEndWith('resources/lang')
+        ->and(is_dir((string) array_key_first($paths)))->toBeTrue()
+        ->and(array_values($paths)[0])->toBe(app()->langPath('vendor/alfakit-calendar'));
 });
