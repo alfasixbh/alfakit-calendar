@@ -25,6 +25,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\ValidationException;
+use Stringable;
 
 /**
  * A FullCalendar widget. Return the events of the visible range from `fetchEvents()`:
@@ -86,6 +87,12 @@ abstract class CalendarWidget extends Widget implements HasResource
     protected static ?string $startAttribute = null;
 
     protected static ?string $endAttribute = null;
+
+    /**
+     * The attribute that names a record in the view, edit and delete modals ("View Standup").
+     * Without it the record's `title`, `name`, `label` or `email`, else its key, is used.
+     */
+    protected static ?string $recordTitleAttribute = null;
 
     /** @var int|string|array<string, int|string|null> */
     protected int|string|array $columnSpan = 'full';
@@ -362,17 +369,34 @@ abstract class CalendarWidget extends Widget implements HasResource
 
     public function editAction(string $name = 'edit'): EditAction
     {
-        return EditAction::make($name)->model($this->getModel())->schema(fn (): array => $this->getFormSchema());
+        return EditAction::make($name)->model($this->getModel())->schema(fn (): array => $this->getFormSchema())
+            ->recordTitle(fn (?Model $record): ?string => $this->getEventRecordTitle($record));
     }
 
     public function viewAction(string $name = 'view'): ViewAction
     {
-        return ViewAction::make($name)->model($this->getModel())->schema(fn (): array => $this->getFormSchema());
+        return ViewAction::make($name)->model($this->getModel())->schema(fn (): array => $this->getFormSchema())
+            ->recordTitle(fn (?Model $record): ?string => $this->getEventRecordTitle($record));
     }
 
     public function deleteAction(string $name = 'delete'): DeleteAction
     {
-        return DeleteAction::make($name)->model($this->getModel());
+        return DeleteAction::make($name)->model($this->getModel())
+            ->recordTitle(fn (?Model $record): ?string => $this->getEventRecordTitle($record));
+    }
+
+    /**
+     * The record's name in the modals: `$recordTitleAttribute`, else null (the action's default).
+     */
+    public function getEventRecordTitle(?Model $record): ?string
+    {
+        if ($record === null || static::$recordTitleAttribute === null) {
+            return null;
+        }
+
+        $title = $record->getAttribute(static::$recordTitleAttribute);
+
+        return filled($title) && (is_scalar($title) || $title instanceof Stringable) ? (string) $title : null;
     }
 
     /**

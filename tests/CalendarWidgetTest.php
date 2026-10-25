@@ -281,6 +281,29 @@ it('opens the event click action for the event record and prefills the date sele
     expect($create['form']['state']['starts_at'])->toStartWith('2026-10-20 09:00');
 });
 
+it('names the record in the event modals with $recordTitleAttribute', function (): void {
+    calendarPanel();
+    calendarTest()->actingAs(calendarUser());
+    $meeting = Meeting::query()->create(['title' => 'Planning', 'starts_at' => '2026-10-13 06:00:00']);
+    [$token, $widget] = calendarWidget(calendarTest());
+    $property = new ReflectionProperty(MeetingsCalendar::class, 'recordTitleAttribute');
+
+    try {
+        // A model without a `title`/`name` column (the docs' Meeting has `subject`) would show "View 1".
+        $property->setValue(null, 'starts_at');
+
+        foreach (['view'] as $action) {
+            $modal = calendarTest()->getJson('/cal/_alfakit/actions/modal?'.http_build_query([
+                'token' => $token, 'component' => "widget:{$widget['id']}", 'action' => $action, 'record' => $meeting->id,
+            ]))->assertOk()->json();
+
+            expect($modal['heading'])->toContain('2026-10-13');
+        }
+    } finally {
+        $property->setValue(null, null);
+    }
+});
+
 it('creates an event from the date select action', function (): void {
     calendarPanel();
     calendarTest()->actingAs(calendarUser());
