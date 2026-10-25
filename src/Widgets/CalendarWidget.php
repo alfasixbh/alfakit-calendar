@@ -304,7 +304,11 @@ abstract class CalendarWidget extends Widget implements HasResource
      */
     protected function getModalActions(): array
     {
-        return $this->hasDefaultActions() ? [$this->editAction(), $this->deleteAction()] : [];
+        // Both close the view modal when they succeed: it would come back showing the old
+        // values after an edit, and a record that no longer exists after a delete.
+        return $this->hasDefaultActions()
+            ? [$this->editAction()->cancelParentActions(), $this->deleteAction()->cancelParentActions()]
+            : [];
     }
 
     /**

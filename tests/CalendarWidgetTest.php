@@ -378,3 +378,17 @@ it('publishes its translations with the alfakit-calendar-translations tag', func
         ->and(is_dir((string) array_key_first($paths)))->toBeTrue()
         ->and(array_values($paths)[0])->toBe(app()->langPath('vendor/alfakit-calendar'));
 });
+
+it('closes the view modal when its edit or delete footer action succeeds', function (): void {
+    calendarPanel();
+    calendarTest()->actingAs(calendarUser());
+
+    $method = new ReflectionMethod(MeetingsCalendar::class, 'getEventClickAction');
+    $view = $method->invoke(MeetingsCalendar::make());
+
+    $footer = collect($view->getExtraModalFooterActions())->keyBy(fn ($action) => $action->getName());
+
+    expect($footer->keys()->all())->toBe(['edit', 'delete'])
+        ->and($footer['edit']->getParentActionsToCancel())->toBeTrue()
+        ->and($footer['delete']->getParentActionsToCancel())->toBeTrue();
+});
